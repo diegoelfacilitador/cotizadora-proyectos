@@ -1,334 +1,346 @@
-import { useState, useMemo } from "react";
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview Paletas</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0a0a; font-family: 'Segoe UI', system-ui, sans-serif; padding: 2rem 1rem; }
 
-const fmtN = (n) => {
-  const v = Math.ceil(n);
-  return isFinite(v) ? v.toLocaleString("es-CL") : "0";
-};
-const fmtMoney = (n) => {
-  const num = parseFloat(n);
-  if (!num || isNaN(num)) return "$0";
-  return "$" + num.toLocaleString("es-CL", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-};
+h1 { text-align: center; color: #fff; font-size: 1.1rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.subtitle { text-align: center; color: #666; font-size: 0.82rem; margin-bottom: 3rem; }
 
-function Slider({ label, value, onChange, min, max, step = 1, suffix = "%", dark }) {
-  const t = dark;
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-        <span style={{ fontSize: 13, color: t ? "#888" : "#666", fontWeight: 500 }}>{label}</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: "#D4A843" }}>{typeof value === "number" ? value.toLocaleString("es-CL") : value}{suffix}</span>
-      </div>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        style={{ width: "100%", accentColor: "#D4A843", cursor: "pointer" }} />
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-        <span style={{ fontSize: 10, color: t ? "#555" : "#bbb" }}>{min}{suffix}</span>
-        <span style={{ fontSize: 10, color: t ? "#555" : "#bbb" }}>{max}{suffix}</span>
-      </div>
-    </div>
-  );
-}
+.palettes { display: flex; flex-direction: column; gap: 4rem; }
 
-function FunnelStage({ label, value, prev, ritmoOk, dark, isFirst }) {
-  const safeValue = isFinite(value) && value > 0 ? value : 0;
-  const safePrev = isFinite(prev) && prev > 0 ? prev : 1;
-  // ancho proporcional respecto a la etapa anterior (máximo 100%)
-  const pct = isFirst ? 100 : Math.min((safeValue / safePrev) * 100, 100);
-  const color = ritmoOk ? "#4CAF50" : "#e05555";
-  const t = dark;
-  return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4, alignItems: "baseline" }}>
-        <span style={{ fontSize: 12, color: t ? "#aaa" : "#666" }}>{label}</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: t ? "#f0f0f0" : "#111" }}>
-          {fmtN(safeValue)}
-          {!isFirst && <span style={{ fontSize: 10, fontWeight: 400, color: t ? "#555" : "#aaa" }}> ({Math.round(pct)}% del anterior)</span>}
-        </span>
-      </div>
-      <div style={{ height: 10, background: t ? "#1a1a1a" : "#e8e8e8", borderRadius: 4 }}>
-        <div style={{ height: "100%", width: pct + "%", background: color, borderRadius: 4, transition: "width 0.5s ease, background 0.4s ease", opacity: safeValue === 0 ? 0.2 : 1 }} />
-      </div>
-    </div>
-  );
-}
+/* CADA PALETA */
+.palette-block { border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.07); }
+.palette-label { padding: 0.6rem 1.5rem; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+.palette-swatches { display: flex; gap: 6px; }
+.swatch { width: 18px; height: 18px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.12); }
 
-export default function App() {
-  const [dark, setDark] = useState(true);
-  const t = dark;
-  const bg = t ? "#111" : "#f5f5f0";
-  const card = t ? "#181818" : "#ffffff";
-  const border = t ? "#2a2a2a" : "#e0e0e0";
-  const text = t ? "#f0f0f0" : "#111";
-  const sub = t ? "#888" : "#666";
+/* MINI HERO */
+.mini-hero { padding: 3rem 2.5rem 2.5rem; }
+.badge { display: inline-block; border: 1px solid; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.3rem 0.85rem; border-radius: 20px; margin-bottom: 1.25rem; }
+.mini-hero h2 { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; }
+.mini-hero p { font-size: 0.92rem; max-width: 520px; line-height: 1.7; margin-bottom: 2rem; opacity: 0.65; }
+.btn { display: inline-block; padding: 0.85rem 2rem; border-radius: 8px; font-size: 0.92rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.15s; }
+.btn:hover { transform: translateY(-2px); }
 
-  // bloque 01
-  const [meta, setMeta] = useState(10000000);
-  const [ticket, setTicket] = useState(2000000);
+/* MINI PAIN */
+.mini-pain { padding: 2rem 2.5rem 2.5rem; }
+.mini-pain .section-tag { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+.mini-pain h3 { font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+.card { border-radius: 10px; padding: 1.25rem; border: 1px solid; }
+.card h4 { font-size: 0.88rem; font-weight: 700; margin-bottom: 0.4rem; }
+.card p { font-size: 0.78rem; line-height: 1.6; opacity: 0.65; }
 
-  // bloque 02
-  const [apertura, setApertura] = useState(5);
-  const [asistencia, setAsistencia] = useState(70);
-  const [convRate, setConvRate] = useState(20);
-  const [showRatios, setShowRatios] = useState(false);
+/* PALETA: ORIGINAL (morado actual) */
+.p-original .palette-label { background: #151820; color: #a78bfa; }
+.p-original .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(108,99,255,0.18) 0%, transparent 60%), #0d0f14; color: #e8eaf0; }
+.p-original .badge { background: rgba(108,99,255,0.15); border-color: rgba(108,99,255,0.35); color: #a78bfa; }
+.p-original .mini-hero h2 span { color: #a78bfa; }
+.p-original .btn { background: #6c63ff; color: #fff; }
+.p-original .mini-pain { background: #151820; color: #e8eaf0; }
+.p-original .mini-pain .section-tag { color: #a78bfa; }
+.p-original .card { background: #1e2230; border-color: rgba(255,255,255,0.05); }
 
-  // bloque 04
-  const [progreso, setProgreso] = useState(0);
-  const [diaDelMes, setDiaDelMes] = useState(15);
+/* PALETA: AZUL+ROSA (colores Escuela) */
+.p-escuela .palette-label { background: #05060f; color: #FF2769; }
+.p-escuela .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(33,43,255,0.2) 0%, transparent 60%), #05060f; color: #f0f0f8; }
+.p-escuela .badge { background: rgba(33,43,255,0.15); border-color: rgba(33,43,255,0.4); color: #7b83ff; }
+.p-escuela .mini-hero h2 span { color: #FF2769; }
+.p-escuela .btn { background: #FF2769; color: #fff; }
+.p-escuela .mini-pain { background: #0d0e1a; color: #f0f0f8; }
+.p-escuela .mini-pain .section-tag { color: #FF2769; }
+.p-escuela .card { background: #13152a; border-color: rgba(33,43,255,0.2); }
 
-  // bloque 05
-  const [showEcuacion, setShowEcuacion] = useState(false);
-  const [activeVar, setActiveVar] = useState(null);
-  const [eqRA, setEqRA] = useState(10);
-  const [eqTC, setEqTC] = useState(20);
-  const [eqTP, setEqTP] = useState(1000000);
+/* PALETA: NARANJA */
+.p-naranja .palette-label { background: #110c08; color: #FF9A7A; }
+.p-naranja .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(255,106,61,0.2) 0%, transparent 60%), #0f0a07; color: #f5ede8; }
+.p-naranja .badge { background: rgba(255,106,61,0.15); border-color: rgba(255,106,61,0.35); color: #FF9A7A; }
+.p-naranja .mini-hero h2 span { color: #FF6A3D; }
+.p-naranja .btn { background: #FF6A3D; color: #fff; }
+.p-naranja .mini-pain { background: #130d09; color: #f5ede8; }
+.p-naranja .mini-pain .section-tag { color: #FF9A7A; }
+.p-naranja .card { background: #1c1108; border-color: rgba(255,106,61,0.18); }
 
-  // cálculo principal
-  const calc = useMemo(() => {
-    const m = parseFloat(meta) || 0;
-    const tk = parseFloat(ticket) || 1;
-    const clientes = m / tk;
-    const reuniones = clientes / (convRate / 100);
-    const agendadas = reuniones / (asistencia / 100);
-    const contactos = agendadas * apertura;
-    const porSemana = contactos / 4;
+/* PALETA: VERDE */
+.p-verde .palette-label { background: #071210; color: #74E5C3; }
+.p-verde .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(46,209,162,0.18) 0%, transparent 60%), #060e0b; color: #e8f5f2; }
+.p-verde .badge { background: rgba(46,209,162,0.12); border-color: rgba(46,209,162,0.3); color: #74E5C3; }
+.p-verde .mini-hero h2 span { color: #2ED1A2; }
+.p-verde .btn { background: #1FA37F; color: #fff; }
+.p-verde .mini-pain { background: #07100d; color: #e8f5f2; }
+.p-verde .mini-pain .section-tag { color: #2ED1A2; }
+.p-verde .card { background: #0d1a14; border-color: rgba(46,209,162,0.15); }
 
-    // targets del embudo — cuántos necesito en total para cerrar la meta
-    const targetContactos = isFinite(contactos) && contactos > 0 ? contactos : 1;
-    const targetConversaciones = isFinite(agendadas) && agendadas > 0 ? agendadas : 1;
-    const targetReuniones = isFinite(reuniones) && reuniones > 0 ? reuniones : 1;
+/* PALETA: AMARILLO */
+.p-amarillo .palette-label { background: #100f03; color: #FFE866; }
+.p-amarillo .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(255,212,0,0.15) 0%, transparent 60%), #0e0d02; color: #f5f4e0; }
+.p-amarillo .badge { background: rgba(255,212,0,0.12); border-color: rgba(255,212,0,0.3); color: #FFE866; }
+.p-amarillo .mini-hero h2 span { color: #FFD400; }
+.p-amarillo .btn { background: #FFD400; color: #0e0d02; }
+.p-amarillo .mini-pain { background: #100f03; color: #f5f4e0; }
+.p-amarillo .mini-pain .section-tag { color: #FFD400; }
+.p-amarillo .card { background: #181600; border-color: rgba(255,212,0,0.12); }
 
-    // simulación — cada etapa depende SOLO de los contactos hechos
-    const contactosHechos = progreso;
-    const conversacionesSim = contactosHechos / apertura;              // 1 de cada X contactos agenda
-    const reunionesSim = conversacionesSim * (asistencia / 100);       // % de agendadas que se concretan
-    const clientesSim = reunionesSim * (convRate / 100);               // % de reuniones que cierran
-    const ingresosSim = clientesSim * tk;
+/* PALETA: MORADO (brand) */
+.p-morado .palette-label { background: #09060f; color: #8C6CFF; }
+.p-morado .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(91,46,255,0.2) 0%, transparent 60%), #080610; color: #ede9ff; }
+.p-morado .badge { background: rgba(91,46,255,0.15); border-color: rgba(91,46,255,0.35); color: #8C6CFF; }
+.p-morado .mini-hero h2 span { color: #8C6CFF; }
+.p-morado .btn { background: #5B2EFF; color: #fff; }
+.p-morado .mini-pain { background: #0d0a18; color: #ede9ff; }
+.p-morado .mini-pain .section-tag { color: #8C6CFF; }
+.p-morado .card { background: #130f22; border-color: rgba(91,46,255,0.18); }
 
-    return {
-      clientes, reuniones, agendadas, contactos, porSemana,
-      targetContactos, targetConversaciones, targetReuniones,
-      contactosHechos, conversacionesSim, reunionesSim, clientesSim, ingresosSim
-    };
-  }, [meta, ticket, apertura, asistencia, convRate, progreso]);
+/* PALETA: CELESTE */
+.p-celeste .palette-label { background: #03090f; color: #66DBFF; }
+.p-celeste .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(0,194,255,0.18) 0%, transparent 60%), #030b10; color: #e0f6ff; }
+.p-celeste .badge { background: rgba(0,194,255,0.12); border-color: rgba(0,194,255,0.3); color: #66DBFF; }
+.p-celeste .mini-hero h2 span { color: #00C2FF; }
+.p-celeste .btn { background: #0099CC; color: #fff; }
+.p-celeste .mini-pain { background: #040c12; color: #e0f6ff; }
+.p-celeste .mini-pain .section-tag { color: #00C2FF; }
+.p-celeste .card { background: #061520; border-color: rgba(0,194,255,0.15); }
 
-  const listo = parseFloat(meta) > 0 && parseFloat(ticket) > 0;
+/* PALETA: AZUL+ROSA con acento verde (combo) */
+.p-combo .palette-label { background: #05060f; color: #2ED1A2; }
+.p-combo .mini-hero { background: radial-gradient(ellipse at 60% 0%, rgba(33,43,255,0.2) 0%, transparent 60%), #05060f; color: #f0f0f8; }
+.p-combo .badge { background: rgba(46,209,162,0.1); border-color: rgba(46,209,162,0.3); color: #2ED1A2; }
+.p-combo .mini-hero h2 span { color: #2ED1A2; }
+.p-combo .btn { background: #212BFF; color: #fff; }
+.p-combo .mini-pain { background: #0d0e1a; color: #f0f0f8; }
+.p-combo .mini-pain .section-tag { color: #2ED1A2; }
+.p-combo .card { background: #13152a; border-color: rgba(33,43,255,0.2); }
+</style>
+</head>
+<body>
 
-  return (
-    <div style={{ minHeight: "100vh", background: bg, color: text, fontFamily: "'Inter','Helvetica Neue',sans-serif", padding: "24px 16px", transition: "background 0.3s" }}>
-      <div style={{ maxWidth: 540, margin: "0 auto" }}>
+<h1>Explorador de Paletas</h1>
+<p class="subtitle">Misma estructura · 8 combinaciones de color · Elige la que más conecta</p>
 
-        {/* Header */}
-        <div style={{ marginBottom: 28, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-          <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <div style={{ width: 3, height: 22, background: "#D4A843", borderRadius: 2 }} />
-              <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800, letterSpacing: "-0.02em", color: text }}>La Ecuación del Vendedor</h1>
-            </div>
-            <p style={{ margin: 0, fontSize: 12, color: sub, paddingLeft: 13 }}>Activa tu red. Sacude el árbol. · JB</p>
-          </div>
-          <button onClick={() => setDark(!dark)}
-            style={{ background: t ? "#222" : "#e8e8e8", border: `1px solid ${border}`, borderRadius: 20, padding: "6px 14px", cursor: "pointer", fontSize: 12, fontWeight: 600, color: text }}>
-            {t ? "☀ Claro" : "☾ Oscuro"}
-          </button>
-        </div>
+<div class="palettes">
 
-        {/* 01 Meta */}
-        <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: "#D4A843", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>01 — Tu Meta</div>
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 12, color: sub, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>¿Cuánto quieres vender este mes?</span>
-                <span style={{ fontSize: 22, fontWeight: 900, color: "#D4A843" }}>{fmtMoney(meta)}</span>
-              </div>
-              <input type="range" min={2000000} max={100000000} step={500000} value={meta}
-                onChange={e => setMeta(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#D4A843", cursor: "pointer" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-                <span style={{ fontSize: 10, color: t ? "#555" : "#bbb" }}>$2.000.000</span>
-                <span style={{ fontSize: 10, color: t ? "#555" : "#bbb" }}>$100.000.000</span>
-              </div>
-            </div>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                <span style={{ fontSize: 12, color: sub, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.08em" }}>¿Cuál es tu ticket promedio?</span>
-                <span style={{ fontSize: 15, fontWeight: 800, color: "#D4A843" }}>{fmtMoney(ticket)}</span>
-              </div>
-              <input type="range" min={1000000} max={100000000} step={500000} value={ticket}
-                onChange={e => setTicket(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#D4A843", cursor: "pointer" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 2 }}>
-                <span style={{ fontSize: 10, color: t ? "#555" : "#bbb" }}>$1.000.000</span>
-                <span style={{ fontSize: 10, color: t ? "#555" : "#bbb" }}>$100.000.000</span>
-              </div>
-            </div>
-          </div>
-          {listo && (
-            <div style={{ marginTop: 14, padding: "10px 14px", background: t ? "#1f1f1f" : "#f5f0e8", borderRadius: 8, borderLeft: "3px solid #D4A843", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: text }}>Clientes que necesitas:</span>
-              <span style={{ fontWeight: 800, fontSize: 28, color: text }}>{fmtN(calc.clientes)}</span>
-            </div>
-          )}
-        </div>
-
-        {/* 02 Tus Números */}
-        <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
-          <button onClick={() => setShowRatios(!showRatios)}
-            style={{ background: "none", border: "none", cursor: "pointer", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: 0, color: "inherit" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#D4A843", letterSpacing: "0.1em", textTransform: "uppercase" }}>02 — Tus Números</span>
-            <span style={{ fontSize: 12, color: sub }}>{showRatios ? "▲ ocultar" : "▼ ajustar"}</span>
-          </button>
-          {!showRatios && (
-            <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
-              {[["Agenda", "1 de " + apertura], ["Asistencia", asistencia + "%"], ["Conversión", convRate + "%"]].map(([l, v]) => (
-                <div key={l} style={{ flex: 1, background: t ? "#1a1a1a" : "#f5f5f0", borderRadius: 8, padding: "8px 6px", textAlign: "center" }}>
-                  <div style={{ fontSize: 10, color: sub, marginBottom: 2 }}>{l}</div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: "#D4A843" }}>{v}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          {showRatios && (
-            <div style={{ marginTop: 16 }}>
-              <Slider dark={t} label="De cada X contactos, 1 agenda una reunión" value={apertura} onChange={setApertura} min={1} max={20} step={1} suffix=" contactos" />
-              <Slider dark={t} label="% de reuniones agendadas que se concretan" value={asistencia} onChange={setAsistencia} min={10} max={100} />
-              <Slider dark={t} label="% de reuniones que se convierten en venta" value={convRate} onChange={setConvRate} min={5} max={80} />
-            </div>
-          )}
-        </div>
-
-        {/* 03 El Número */}
-        {listo && (
-          <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#D4A843", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 20 }}>03 — El Número que Importa</div>
-            <div style={{ textAlign: "center", marginBottom: 20 }}>
-              <div style={{ fontSize: 13, color: sub, marginBottom: 8 }}>Personas a contactar durante este mes</div>
-              <div style={{ fontSize: 72, fontWeight: 900, color: text, lineHeight: 1, letterSpacing: "-0.04em" }}>{fmtN(calc.contactos)}</div>
-            </div>
-            <div style={{ background: "#D4A843", borderRadius: 10, padding: "14px 18px", textAlign: "center" }}>
-              <div style={{ fontSize: 11, color: "#111", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Esta semana contacta a</div>
-              <div style={{ fontSize: 40, fontWeight: 900, color: "#111", lineHeight: 1 }}>{fmtN(calc.porSemana)}</div>
-              <div style={{ fontSize: 11, color: "#333", marginTop: 2 }}>personas</div>
-            </div>
-          </div>
-        )}
-
-        {/* 04 Embudo */}
-        {listo && (
-          <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#D4A843", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 16 }}>04 — El Embudo</div>
-            <Slider dark={t} label="Personas contactadas este mes" value={progreso} onChange={setProgreso} min={0} max={500} step={1} suffix=" personas" />
-            <Slider dark={t} label="Día del mes" value={diaDelMes} onChange={setDiaDelMes} min={1} max={30} step={1} suffix="" />
-            <div style={{ marginBottom: 16 }}>
-              {(() => {
-                const diasTranscurridos = Math.max(diaDelMes, 1);
-                const diasRestantes = Math.max(30 - diaDelMes, 1);
-                const ritmoActual = progreso / diasTranscurridos;
-                const faltan = Math.max(Math.ceil(calc.targetContactos) - progreso, 0);
-                const ritmoNecesario = faltan / diasRestantes;
-                const contactosOk = ritmoActual >= ritmoNecesario;
-
-                const conversaciones = calc.conversacionesSim;
-                const reuniones = calc.reunionesSim;
-                const convOk = conversaciones / Math.max(progreso, 1) >= (1 / apertura) * 0.8;
-                const reunOk = reuniones / Math.max(conversaciones, 1) >= (asistencia / 100) * 0.8;
-
-                return (
-                  <>
-                    <FunnelStage dark={t} label="Personas contactadas" value={progreso} prev={progreso} ritmoOk={contactosOk} isFirst={true} />
-                    <FunnelStage dark={t} label="Conversaciones establecidas" value={conversaciones} prev={progreso} ritmoOk={convOk} />
-                    <FunnelStage dark={t} label="Reuniones agendadas y concretadas" value={reuniones} prev={conversaciones} ritmoOk={reunOk} />
-                  </>
-                );
-              })()}
-            </div>
-
-
-            <div style={{ background: t ? "#1f1f1f" : "#f5f0e8", borderRadius: 10, padding: "18px 20px", border: `1px solid ${t ? "#3a3a2a" : "#d4c090"}` }}>
-              <div style={{ fontSize: 12, color: "#D4A843", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14 }}>Proyección actual</div>
-              <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-                {[["Meta", fmtMoney(meta)], ["Proyectado", fmtMoney(calc.ingresosSim)], ["Clientes", fmtN(calc.clientesSim)], ["Reuniones", fmtN(calc.reunionesSim)]].map(([l, v]) => (
-                  <div key={l} style={{ textAlign: "center", flex: 1, minWidth: 70 }}>
-                    <div style={{ fontSize: 11, color: sub, marginBottom: 4 }}>{l}</div>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: l === "Proyectado" ? (calc.ingresosSim >= parseFloat(meta) ? "#4CAF50" : "#e05555") : text }}>{v}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* 05 La Ecuación */}
-        <div style={{ background: card, border: `1px solid ${border}`, borderRadius: 12, padding: 20, marginBottom: 12 }}>
-          <button onClick={() => {
-            if (!showEcuacion) {
-              setEqRA(Math.min(70, Math.ceil(calc.reuniones) || 10));
-              setEqTC(convRate);
-              setEqTP(Math.min(30000000, parseFloat(ticket) || 1000000));
-            }
-            setShowEcuacion(!showEcuacion);
-          }} style={{ background: "none", border: "none", cursor: "pointer", width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: 0, color: "inherit" }}>
-            <span style={{ fontSize: 11, fontWeight: 700, color: "#D4A843", letterSpacing: "0.1em", textTransform: "uppercase" }}>05 — La Ecuación del Vendedor</span>
-            <span style={{ fontSize: 12, color: sub }}>{showEcuacion ? "▲ cerrar" : "▼ abrir"}</span>
-          </button>
-          {showEcuacion && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, flexWrap: "wrap", marginBottom: 24, padding: "12px 0", borderBottom: `1px solid ${border}` }}>
-                {[["RA", "Reuniones agendadas"], ["×", null], ["TC", "Tasa de cierre"], ["×", null], ["TP", "Ticket promedio"], ["=", null], ["EV", "Ingresos"]].map(([symbol, tooltip], i) =>
-                  tooltip ? (
-                    <div key={i} style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 20, fontWeight: 900, transition: "color 0.2s", color: symbol === activeVar ? "#D4A843" : symbol === "EV" ? (activeVar ? sub : "#D4A843") : text }}>{symbol}</div>
-                      <div style={{ fontSize: 9, color: sub, marginTop: 2, maxWidth: 60, lineHeight: 1.2 }}>{tooltip}</div>
-                    </div>
-                  ) : (
-                    <div key={i} style={{ fontSize: 22, fontWeight: 300, color: sub, paddingBottom: 14 }}>{symbol}</div>
-                  )
-                )}
-              </div>
-              <div onMouseEnter={() => setActiveVar("RA")} onMouseLeave={() => setActiveVar(null)}>
-                <Slider dark={t} label="Reuniones agendadas" value={eqRA} onChange={setEqRA} min={1} max={70} step={1} suffix=" reuniones" />
-              </div>
-              <div onMouseEnter={() => setActiveVar("TC")} onMouseLeave={() => setActiveVar(null)}>
-                <Slider dark={t} label="Tasa de cierre" value={eqTC} onChange={setEqTC} min={5} max={100} step={5} suffix="%" />
-              </div>
-              <div onMouseEnter={() => setActiveVar("TP")} onMouseLeave={() => setActiveVar(null)}>
-                <Slider dark={t} label="Ticket promedio" value={eqTP} onChange={setEqTP} min={100000} max={30000000} step={100000} suffix="" />
-              </div>
-              <div style={{ marginTop: 8, background: "#D4A843", borderRadius: 10, padding: "16px 20px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <span style={{ fontSize: 22, fontWeight: 900, color: "#111" }}>{fmtMoney(Math.round(eqRA * (eqTC / 100) * eqTP))}</span>
-                    <span style={{ fontSize: 10, color: "#5a4010", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Ingresos proyectados</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: "#5a4010", textAlign: "right", lineHeight: 1.6 }}>
-                    <div>{eqRA} reuniones</div>
-                    <div>× {eqTC}% cierre</div>
-                    <div>× {fmtMoney(eqTP)}</div>
-                  </div>
-                </div>
-              </div>
-              <div style={{ marginTop: 14, display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {[
-                  { label: "Menos reuniones, mejor ticket", ra: 5, tc: 40, tp: 2000000 },
-                  { label: "Mejor cierre, más ventas", ra: 20, tc: 60, tp: 500000 },
-                  { label: "Volumen alto, ticket bajo", ra: 40, tc: 25, tp: 200000 },
-                ].map((p, i) => (
-                  <button key={i} onClick={() => { setEqRA(p.ra); setEqTC(p.tc); setEqTP(p.tp); }}
-                    style={{ flex: 1, minWidth: 120, background: t ? "#1a1a1a" : "#f0f0f0", border: `1px solid ${border}`, borderRadius: 8, padding: "8px 10px", cursor: "pointer", fontSize: 11, color: sub, fontWeight: 600, lineHeight: 1.3, textAlign: "center" }}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {!listo && (
-          <div style={{ textAlign: "center", padding: "32px 0", color: t ? "#444" : "#bbb", fontSize: 13 }}>
-            Mueve los sliders para ver la matemática →
-          </div>
-        )}
+  <!-- ORIGINAL -->
+  <div class="palette-block p-original">
+    <div class="palette-label">
+      ACTUAL — Morado suave (base de comparación)
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#6c63ff"></div>
+        <div class="swatch" style="background:#a78bfa"></div>
+        <div class="swatch" style="background:#0d0f14"></div>
       </div>
     </div>
-  );
-}
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AZUL + ROSA ESCUELA -->
+  <div class="palette-block p-escuela">
+    <div class="palette-label">
+      AZUL + ROSA — Colores Escuela de Facilitadores
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#212BFF"></div>
+        <div class="swatch" style="background:#FF2769"></div>
+        <div class="swatch" style="background:#05060f"></div>
+      </div>
+    </div>
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NARANJA -->
+  <div class="palette-block p-naranja">
+    <div class="palette-label">
+      NARANJA — Energía y acción
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#FF6A3D"></div>
+        <div class="swatch" style="background:#FF9A7A"></div>
+        <div class="swatch" style="background:#0f0a07"></div>
+      </div>
+    </div>
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- VERDE -->
+  <div class="palette-block p-verde">
+    <div class="palette-label">
+      VERDE — Confianza y crecimiento
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#2ED1A2"></div>
+        <div class="swatch" style="background:#74E5C3"></div>
+        <div class="swatch" style="background:#060e0b"></div>
+      </div>
+    </div>
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AMARILLO -->
+  <div class="palette-block p-amarillo">
+    <div class="palette-label">
+      AMARILLO — Claridad y atención
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#FFD400"></div>
+        <div class="swatch" style="background:#FFE866"></div>
+        <div class="swatch" style="background:#0e0d02"></div>
+      </div>
+    </div>
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MORADO BRAND -->
+  <div class="palette-block p-morado">
+    <div class="palette-label">
+      MORADO — Premium y profundidad
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#5B2EFF"></div>
+        <div class="swatch" style="background:#8C6CFF"></div>
+        <div class="swatch" style="background:#080610"></div>
+      </div>
+    </div>
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELESTE -->
+  <div class="palette-block p-celeste">
+    <div class="palette-label">
+      CELESTE — Tecnología y claridad
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#00C2FF"></div>
+        <div class="swatch" style="background:#66DBFF"></div>
+        <div class="swatch" style="background:#030b10"></div>
+      </div>
+    </div>
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMBO: AZUL + VERDE -->
+  <div class="palette-block p-combo">
+    <div class="palette-label">
+      COMBO — Azul Escuela + Verde acento
+      <div class="palette-swatches">
+        <div class="swatch" style="background:#212BFF"></div>
+        <div class="swatch" style="background:#2ED1A2"></div>
+        <div class="swatch" style="background:#05060f"></div>
+      </div>
+    </div>
+    <div class="mini-hero">
+      <div class="badge">Programa online · Facilitación Esencial</div>
+      <h2>Aprende a facilitar <span>conversaciones que mueven</span> a grupos hacia resultados.</h2>
+      <p>Para líderes, HR y consultores que necesitan estructurar dinámicas, talleres y reuniones críticas — sin improvisar.</p>
+      <div class="btn">Quiero inscribirme →</div>
+    </div>
+    <div class="mini-pain">
+      <div class="section-tag">El problema</div>
+      <h3>Tienes que liderar conversaciones que el grupo aún no sabe tener.</h3>
+      <div class="cards">
+        <div class="card"><h4>La conversación no avanza</h4><p>El grupo gira en círculos. Al final nadie sabe qué se decidió ni quién hace qué.</p></div>
+        <div class="card"><h4>Los mismos temas, semana tras semana</h4><p>Se habla mucho, se decide poco. Los acuerdos no se sostienen.</p></div>
+        <div class="card"><h4>Cada proceso clave depende de un externo</h4><p>Sin un facilitador interno capaz, todo pasa por contratar a alguien.</p></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
